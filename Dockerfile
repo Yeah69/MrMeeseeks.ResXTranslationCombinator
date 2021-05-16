@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:5.0 as build-env
 
 # Copy everything and publish the release (publish implicitly restores and builds)
 COPY . ./
-RUN dotnet publish ./Action/Action.csproj -c Release -o out --no-self-contained
+RUN dotnet publish ./Action/Action.csproj -c Release -o . --no-self-contained
 
 # Label the container
 LABEL maintainer="Dieter 'Dima' Enns <dieter.enns@gmail.com>"
@@ -19,4 +19,4 @@ LABEL com.github.actions.color="purple"
 # Relayer the .NET SDK, anew with the build output
 #FROM mcr.microsoft.com/dotnet/sdk:5.0 todo do I need that?
 #COPY --from=build-env /out .
-ENTRYPOINT [ "dotnet", "/MrMeeseeks.ResXTranslationCombinator.Action.dll" ]
+ENTRYPOINT [ "/MrMeeseeks.ResXTranslationCombinator.Action.exe" ]

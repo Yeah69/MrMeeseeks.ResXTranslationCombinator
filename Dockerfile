@@ -7,8 +7,8 @@ RUN dotnet publish ./Action/Action.csproj -c Release -o out --no-self-contained
 
 # Label the container
 LABEL maintainer="Dieter 'Dima' Enns <dieter.enns@gmail.com>"
-#LABEL repository="https://github.com/dotnet/samples" todo
-#LABEL homepage="https://github.com/dotnet/samples" todo
+LABEL repository="https://github.com/Yeah69/MrMeeseeks.ResXTranslationCombinator"
+LABEL homepage="https://github.com/Yeah69/MrMeeseeks.ResXTranslationCombinator"
 
 # Label as GitHub action
 LABEL com.github.actions.name="ResX Translation and Combination"

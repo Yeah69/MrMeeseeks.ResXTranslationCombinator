@@ -1,0 +1,25 @@
+name: 'ResX Translation and Combination'
+description: 'A Github action that searches for default, automatically translated, and manually overriden ResX files, automatically translates missing texts, and combines them to directly usable ResX files.'
+branding:
+  icon: file-plus
+  color: purple
+inputs:
+  dir:
+    description: 'The root directory to work from. Example, "path/to/code".'
+    required: true
+  auth:
+    description: 'Auth key for your DeepL API access.'
+    required: true
+outputs:
+  summary-title:
+    description: 'The title of the commit for the pull request.'
+  summary-details:
+    description: 'The summary details of the commit for the pull request.'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+  - '-d'
+  - ${{ inputs.dir }}
+  - '-a'
+  - ${{ inputs.auth }}

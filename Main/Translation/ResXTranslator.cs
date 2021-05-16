@@ -124,6 +124,18 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 resXResourceWriter.Generate();
                 resXResourceWriter.Close();
             }
+            
+            using var templateResXResourceWriter = new ResXResourceWriter(
+                Path.Combine(defaultResourceFile.DirectoryName ?? "", 
+                    $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.template.o{defaultResourceFile.Extension}"));
+                
+            foreach (var key in defaults.Keys)
+            {
+                var resXDataNode = new ResXDataNode(key, "");
+                templateResXResourceWriter.AddResource(resXDataNode);
+            }
+            templateResXResourceWriter.Generate();
+            templateResXResourceWriter.Close();
         }
 
         private static (IImmutableDictionary<string, string> Default,

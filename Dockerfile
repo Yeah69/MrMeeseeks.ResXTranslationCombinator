@@ -16,7 +16,4 @@ LABEL com.github.actions.description="A Github action that searches for default,
 LABEL com.github.actions.icon="file-plus"
 LABEL com.github.actions.color="purple"
 
-# Relayer the .NET SDK, anew with the build output
-#FROM mcr.microsoft.com/dotnet/sdk:5.0 todo do I need that?
-#COPY --from=build-env /out .
 ENTRYPOINT [ "dotnet", "/Action/bin/Release/net5.0/MrMeeseeks.ResXTranslationCombinator.Action.dll" ]

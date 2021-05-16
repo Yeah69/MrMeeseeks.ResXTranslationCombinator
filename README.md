@@ -53,7 +53,7 @@ jobs:
   - https://docs.microsoft.com/en-us/dotnet/devops/create-dotnet-github-action the corresponding tutorial which teaches how to implement a Github action with .Net
 - https://github.com/IEvangelist/resource-translator
   - Similar project to this one. I didn't have a detailed look into it, so I maybe am inaccurate, but I think these are the differences:
-   - Uses Azure instead of DeepL for translations
-   - Has no feature to override the automatic translation (from what I saw, I didn't found it)
-   - Is written in TypeScript (just a fact; shouldn't matter much if you just want to use it)
+    - Uses Azure instead of DeepL for translations
+    - Has no feature to override the automatic translation (from what I saw, I didn't found it)
+    - Is written in TypeScript (just a fact; shouldn't matter much if you just want to use it)
   - https://github.com/marketplace/actions/machine-translator market place entry

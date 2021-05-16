@@ -56,4 +56,4 @@ jobs:
    - Uses Azure instead of DeepL for translations
    - Has no feature to override the automatic translation (from what I saw, I didn't found it)
    - Is written in TypeScript (just a fact; shouldn't matter much if you just want to use it)
- - https://github.com/marketplace/actions/machine-translator market place entry
+  - https://github.com/marketplace/actions/machine-translator market place entry

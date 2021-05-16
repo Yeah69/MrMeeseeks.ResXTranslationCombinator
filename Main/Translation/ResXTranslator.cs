@@ -10,7 +10,7 @@ using System.Resources;
 using System.Threading.Tasks;
 using MoreLinq;
 
-namespace MrMeeseeks.ResXCombinator.Translation
+namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     public interface IResXTranslator
     {

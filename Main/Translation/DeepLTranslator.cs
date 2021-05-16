@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DeepL;
 
-namespace MrMeeseeks.ResXCombinator.Translation
+namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     internal class DeepLTranslator : ITranslator
     {

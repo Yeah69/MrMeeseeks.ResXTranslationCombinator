@@ -1,6 +1,6 @@
 using System;
 
-namespace MrMeeseeks.ResXCombinator.Translation
+namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     public class ResXTranslatorTranslationFailedException : Exception
     {

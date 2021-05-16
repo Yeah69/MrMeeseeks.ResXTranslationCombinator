@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <RootNamespace>MrMeeseeks.ResXCombinator</RootNamespace>
+    <RootNamespace>MrMeeseeks.ResXTranslationCombinator</RootNamespace>
+    <AssemblyName>MrMeeseeks.ResXTranslationCombinator</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

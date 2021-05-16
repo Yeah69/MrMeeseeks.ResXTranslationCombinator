@@ -1,4 +1,4 @@
-namespace MrMeeseeks.ResXCombinator.Translation
+namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     public interface IContext
     {

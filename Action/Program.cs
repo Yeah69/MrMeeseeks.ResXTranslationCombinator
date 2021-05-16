@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
-using MrMeeseeks.ResXCombinator.Translation;
 using MrMeeseeks.ResXTranslationCombinator.Action;
+using MrMeeseeks.ResXTranslationCombinator.Translation;
 using static CommandLine.Parser;
 
 static async Task StartAnalysisAsync(ActionInputs inputs)

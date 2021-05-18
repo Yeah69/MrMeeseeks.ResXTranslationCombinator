@@ -46,6 +46,8 @@ jobs:
           commit-message: '${{ steps.translator.outputs.summary-details }}'
 ```
 
+For a bit of more details, see the wiki page https://github.com/Yeah69/MrMeeseeks.ResXTranslationCombinator/wiki.
+
 ## References
 
 - https://github.com/dotnet/samples/tree/main/github-actions/DotNet.GitHubAction

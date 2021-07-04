@@ -73,7 +73,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                     using var resXResourceWriter = new ResXResourceWriter(
                         Path.Combine(defaultResourceFile.DirectoryName ?? "", 
                             $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{supportedCultureInfo.Name}.a{defaultResourceFile.Extension}"));
-                    foreach (var keyValuePair in acc)
+                    foreach (var keyValuePair in acc.OrderBy(kvp => kvp.Key))
                     {
                         var resXDataNode = new ResXDataNode(keyValuePair.Key, keyValuePair.Value)
                         {

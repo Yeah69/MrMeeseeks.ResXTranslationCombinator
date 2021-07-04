@@ -42,6 +42,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             var (defaults, automatics, overrides) =
                 GetMappings(pathToDefaultResXFile);
 
+            var orderedDefaultKeys = defaults.Keys.ToImmutableSortedSet();
+
             var supportedCultureInfos = new HashSet<CultureInfo>(await _translator.GetSupportedCultureInfos().ConfigureAwait(false));
             
             
@@ -99,7 +101,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                     ? a
                     : ImmutableDictionary<string, string>.Empty;
                 
-                foreach (var key in defaults.Keys)
+                foreach (var key in orderedDefaultKeys)
                 {
                     string value = "";
                     string comment = "Neither a manually overriden nor an automatically translated value found";
@@ -125,11 +127,25 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 resXResourceWriter.Close();
             }
             
+            foreach (var overrideItem in overrides)
+            {
+                using var resXResourceWriter = new ResXResourceWriter(
+                    Path.Combine(defaultResourceFile.DirectoryName ?? "", 
+                        $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{overrideItem.Key.Name}.o{defaultResourceFile.Extension}"));
+                foreach (var key in orderedDefaultKeys)
+                {
+                    var resXDataNode = new ResXDataNode(key, overrideItem.Value.TryGetValue(key, out var value) ? value : "");
+                    resXResourceWriter.AddResource(resXDataNode);
+                }
+                resXResourceWriter.Generate();
+                resXResourceWriter.Close();
+            }
+            
             using var templateResXResourceWriter = new ResXResourceWriter(
                 Path.Combine(defaultResourceFile.DirectoryName ?? "", 
                     $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.template.o{defaultResourceFile.Extension}"));
                 
-            foreach (var key in defaults.Keys)
+            foreach (var key in orderedDefaultKeys)
             {
                 var resXDataNode = new ResXDataNode(key, "");
                 templateResXResourceWriter.AddResource(resXDataNode);

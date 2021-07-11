@@ -32,7 +32,7 @@ jobs:
       # Translate and combine ResX files
       - name: Translation and Combination
         id: translator
-        uses: Yeah69/MrMeeseeks.ResXTranslationCombinator@v1.0.0
+        uses: Yeah69/MrMeeseeks.ResXTranslationCombinator@v69.0.1
         with:
           # Take root directory of the repository as directory to search for the ResX files
           dir: ${{ './' }}

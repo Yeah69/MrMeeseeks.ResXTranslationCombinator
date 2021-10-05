@@ -7,6 +7,7 @@
     <AssemblyName>MrMeeseeks.ResXTranslationCombinator.Action</AssemblyName>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

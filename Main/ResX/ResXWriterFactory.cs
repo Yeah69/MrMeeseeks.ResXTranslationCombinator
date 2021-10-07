@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Xml.Linq;
 
 namespace MrMeeseeks.ResXTranslationCombinator.ResX
@@ -19,8 +20,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
             var root = xDocument.Root ?? throw new Exception("No root node"); 
             var dataElement = root.Element("data") ?? throw new Exception("No data element");
             dataElement.RemoveNodes();
-            foreach (var xElement in root.Elements("data"))
-                xElement.Remove();
+            var xElements = root.Elements().Where(e => e.Name != "data").ToList();
+            root.RemoveNodes();
+            foreach (var xElement in xElements)
+                root.Add(xElement);
 
             _rootFactory = () => new XElement(root);
             _dataFactory = () => new XElement(dataElement);

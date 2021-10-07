@@ -27,12 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@main
 
       # Translate and combine ResX files
       - name: Translation and Combination
         id: translator
-        uses: Yeah69/MrMeeseeks.ResXTranslationCombinator@v69.0.1
+        uses: Yeah69/MrMeeseeks.ResXTranslationCombinator@main
         with:
           # Take root directory of the repository as directory to search for the ResX files
           dir: ${{ './' }}
@@ -40,7 +40,7 @@ jobs:
           auth: ${{ secrets.DEEPL_API_AUTH_KEY }}
 
       - name: create-pull-request
-        uses: peter-evans/create-pull-request@v3.9.2
+        uses: peter-evans/create-pull-request@main
         with:
           title: '${{ steps.translator.outputs.summary-title }}'
           commit-message: '${{ steps.translator.outputs.summary-details }}'

@@ -7,8 +7,12 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
         string Comment { get; }
     }
 
-    internal record ResXNode(
-        string Name,
-        string Value,
-        string Comment) : IResXNode;
+    internal record ResXNode : IResXNode
+    {
+        public ResXNode((string Name, string Value, string Comment) tuple) => (Name, Value, Comment) = tuple;
+
+        public string Name { get; }
+        public string Value { get; }
+        public string Comment { get; }
+    };
 }

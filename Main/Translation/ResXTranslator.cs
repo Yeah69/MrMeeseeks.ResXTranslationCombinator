@@ -24,11 +24,20 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
     internal class ResXTranslator : IResXTranslator
     {
         private readonly ITranslator _translator;
+        private readonly Func<string, IResXWriterFactory> _resXWriterFactoryFactory;
+        private readonly Func<string, IResXReader> _resXReaderFactory;
+        private readonly Func<(string Name, string Value, string Comment), IResXNode> _resXNodeFactory;
 
         public ResXTranslator(
-            ITranslator translator)
+            ITranslator translator,
+            Func<string, IResXWriterFactory> resXWriterFactoryFactory,
+            Func<string, IResXReader> resXReaderFactory,
+            Func<(string Name, string Value, string Comment), IResXNode> resXNodeFactory)
         {
             _translator = translator;
+            _resXWriterFactoryFactory = resXWriterFactoryFactory;
+            _resXReaderFactory = resXReaderFactory;
+            _resXNodeFactory = resXNodeFactory;
         }
         
         public async Task Translate(string pathToDefaultResXFile)
@@ -37,10 +46,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             if (!defaultResourceFile.Exists)
                 throw new Exception();
 
-            var placeholder = new ResXWriterFactory(pathToDefaultResXFile);
+            var placeholder = _resXWriterFactoryFactory(pathToDefaultResXFile);
 
             var (defaults, automatics, overrides) =
-                GetMappings(pathToDefaultResXFile);
+                GetMappings(pathToDefaultResXFile, _resXReaderFactory);
 
             var orderedDefaultKeys = defaults.Keys.ToImmutableSortedSet();
 
@@ -75,10 +84,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                             $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{supportedCultureInfo.Name}.a{defaultResourceFile.Extension}"));
                     foreach (var keyValuePair in acc.OrderBy(kvp => kvp.Key))
                     {
-                        var resXDataNode = new ResXNode(
+                        var resXDataNode = _resXNodeFactory((
                             keyValuePair.Key, 
                             keyValuePair.Value,
-                            "Automatically Translated");
+                            "Automatically Translated"));
                         resXResourceWriter.AddResource(resXDataNode);
                     }
                     resXResourceWriter.Generate();
@@ -116,7 +125,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                         comment = "Automatically translated.";
                     }
                     
-                    var resXDataNode = new ResXNode(key, value, comment);
+                    var resXDataNode = _resXNodeFactory((key, value, comment));
                     resXResourceWriter.AddResource(resXDataNode);
                 }
                 resXResourceWriter.Generate();
@@ -129,7 +138,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                         $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{overrideItem.Key.Name}.o{defaultResourceFile.Extension}"));
                 foreach (var key in orderedDefaultKeys)
                 {
-                    var resXDataNode = new ResXNode(key, overrideItem.Value.TryGetValue(key, out var value) ? value : "", "");
+                    var resXDataNode = _resXNodeFactory((key, overrideItem.Value.TryGetValue(key, out var value) ? value : "", ""));
                     resXResourceWriter.AddResource(resXDataNode);
                 }
                 resXResourceWriter.Generate();
@@ -141,7 +150,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 
             foreach (var key in orderedDefaultKeys)
             {
-                var resXDataNode = new ResXNode(key, "", "");
+                var resXDataNode = _resXNodeFactory((key, "", ""));
                 templateResXResourceWriter.AddResource(resXDataNode);
             }
             templateResXResourceWriter.Generate();
@@ -150,12 +159,13 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         private static (IImmutableDictionary<string, string> Default,
             IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Automatics,
             IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides) GetMappings(
-                string pathToDefaultResXFile)
+                string pathToDefaultResXFile,
+                Func<string, IResXReader> resXReaderFactory)
         {
             var defaultResourceFile = new FileInfo(pathToDefaultResXFile);
             if (!defaultResourceFile.Exists)
                 throw new Exception();
-            var reader = new ResXReader(defaultResourceFile.FullName);
+            var reader = resXReaderFactory(defaultResourceFile.FullName);
 
             var defaultResXFileNameWithoutExtension = defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')];
 
@@ -181,25 +191,26 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                     FileInfo: t.fi))
                 .ToList();
 
-            var automatics = AandOToDictionary(aAndO, ResXFileType.AutomaticallyTranslated);
+            var automatics = AandOToDictionary(aAndO, ResXFileType.AutomaticallyTranslated, resXReaderFactory);
 
-            var overrides = AandOToDictionary(aAndO, ResXFileType.ManuallyOverriden);
+            var overrides = AandOToDictionary(aAndO, ResXFileType.ManuallyOverriden, resXReaderFactory);
 
             return (defaults, automatics, overrides);
             
             static IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> AandOToDictionary(
                 IEnumerable<(CultureInfo CultureInfo, ResXFileType Type, FileInfo FileInfo)> aAndO,
-                ResXFileType filterType) =>
+                ResXFileType filterType,
+                Func<string, IResXReader> resXReaderFactory) =>
                 aAndO
                     .Where(t => t.Type == filterType)
                     .Select(t =>
                     {
-                        var reader = new ResXReader(t.FileInfo.FullName);
+                        var reader = resXReaderFactory(t.FileInfo.FullName);
                         return (t.CultureInfo, Map: GetKeyValuesFromReader(reader, false));
                     })
                     .ToImmutableDictionary(t => t.CultureInfo, t => t.Map);
             
-            static IImmutableDictionary<string, string> GetKeyValuesFromReader(ResXReader reader, bool isDefault) => 
+            static IImmutableDictionary<string, string> GetKeyValuesFromReader(IResXReader reader, bool isDefault) => 
                 reader
                     .Select(rdn => (rdn.Name, rdn.Value))
                     .Where(t => isDefault || !string.IsNullOrWhiteSpace(t.Value))

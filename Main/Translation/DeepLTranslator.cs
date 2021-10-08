@@ -11,10 +11,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         private readonly string _authKey;
 
         public DeepLTranslator(
-            string authKey)
-        {
-            _authKey = authKey;
-        }
+            IActionInputs actionInputs) =>
+            _authKey = actionInputs.AuthKey;
 
         public async Task<CultureInfo[]> GetSupportedCultureInfos()
         {

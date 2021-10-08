@@ -11,11 +11,16 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
 
     internal class ResXWriterFactory : IResXWriterFactory
     {
-        private readonly Func<XElement> _dataFactory;
-        private readonly Func<XElement> _rootFactory;
+        private readonly Func<string, IResXElementsFactory, IResXWriter> _resXWriterFactory;
+        private readonly IResXElementsFactory _resxElementsFactoryFactory;
 
-        public ResXWriterFactory(string pathOriginal)
+        public ResXWriterFactory(
+            string pathOriginal,
+            
+            Func<(XElement RootTemplate, XElement DataTemplate), IResXElementsFactory> resXElementsFactoryFactory,
+            Func<string, IResXElementsFactory, IResXWriter> resXWriterFactory)
         {
+            _resXWriterFactory = resXWriterFactory;
             var xDocument = XDocument.Load(pathOriginal);
             var root = xDocument.Root ?? throw new Exception("No root node"); 
             var dataElement = root.Element("data") ?? throw new Exception("No data element");
@@ -24,11 +29,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
             root.RemoveNodes();
             foreach (var xElement in xElements)
                 root.Add(xElement);
-
-            _rootFactory = () => new XElement(root);
-            _dataFactory = () => new XElement(dataElement);
+            
+            _resxElementsFactoryFactory = resXElementsFactoryFactory((root, dataElement));
         }
 
-        public IResXWriter Create(string path) => new ResXWriter(path, _rootFactory, _dataFactory);
+        public IResXWriter Create(string path) => _resXWriterFactory(path, _resxElementsFactoryFactory);
     }
 }

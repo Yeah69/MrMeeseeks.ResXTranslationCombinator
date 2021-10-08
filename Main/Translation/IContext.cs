@@ -1,23 +1,55 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+
 namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     public interface IContext
     {
-        IResXTranslator Translator { get; }
-    }
-    
-    public static class ContextFactory
-    {
-        public static IContext CreateDeepLContext(string authKeyForDeepLPro) => 
-            new DeepLContext(authKeyForDeepLPro);
+        Task TraverseAndTranslate();
     }
 
     internal class DeepLContext : IContext
     {
-        public DeepLContext(string authKeyForDeepLPro) =>
-            Translator = new ResXTranslator(
-                new DeepLTranslator(
-                    authKeyForDeepLPro));
+        private readonly IActionInputs _actionInputs;
+        private readonly IResXTranslator _resXTranslator;
 
-        public IResXTranslator Translator { get; }
+        public DeepLContext(
+            IActionInputs actionInputs,
+            IResXTranslator resXTranslator)
+        {
+            _actionInputs = actionInputs;
+            _resXTranslator = resXTranslator;
+        }
+        
+        public async Task TraverseAndTranslate()
+        {
+            var rootDirectory = new DirectoryInfo(_actionInputs.Directory);
+            if (!rootDirectory.Exists)
+            {
+                Console.WriteLine("[Warning] Given root directory doesn't exist! Aborting!");
+                return;
+            }
+            
+            Directory.SetCurrentDirectory(rootDirectory.FullName);
+
+            var defaultResXFiles = Directory.EnumerateFiles(".", "*.resx", SearchOption.AllDirectories)
+                .Select(p => new FileInfo(p))
+                .Where(fi => fi.Name.Split('.').Length == 2)
+                .ToList();
+    
+            foreach (var defaultResXFile in defaultResXFiles)
+            {
+                await _resXTranslator.Translate(defaultResXFile.FullName).ConfigureAwait(false);
+            }
+
+            const string title = "Localization";
+            const string summary = "Summary";
+
+            // https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-an-output-parameter
+            Console.WriteLine($"::set-output name=summary-title::{title}");
+            Console.WriteLine($"::set-output name=summary-details::{summary}");
+        }
     }
 }

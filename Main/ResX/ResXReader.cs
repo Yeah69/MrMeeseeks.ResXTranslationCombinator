@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +14,19 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
 
     internal class ResXReader : IResXReader
     {
+        private readonly Func<(string Name, string Value, string Comment), IResXNode> _resxNodeFactory;
         private readonly XDocument _xDocument;
 
-        public ResXReader(string path) => _xDocument = XDocument.Load(path);
+        public ResXReader(
+            // parameters
+            string path,
+            
+            // dependencies
+            Func<(string Name, string Value, string Comment), IResXNode> resxNodeFactory)
+        {
+            _resxNodeFactory = resxNodeFactory;
+            _xDocument = XDocument.Load(path);
+        }
 
         public IEnumerator<IResXNode> GetEnumerator()
         {
@@ -25,14 +36,11 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
                     var name = xe.Attribute("name")?.Value ?? "";
                     var value = xe.Element("value")?.Value ?? "";
                     var comment = xe.Element("comment")?.Value ?? "";
-                    return new ResXNode(name, value, comment);
+                    return _resxNodeFactory((name, value, comment));
                 })
                 .GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

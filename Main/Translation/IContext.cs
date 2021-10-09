@@ -19,7 +19,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         private readonly ILogger _logger;
         private readonly Func<string, FileInfo> _fileInfoFactory;
         private readonly Func<string, DirectoryInfo> _directoryInfoFactory;
-        private readonly Regex _excludesRegex;
+        private readonly Regex? _excludesRegex;
 
         public DeepLContext(
             IActionInputs actionInputs,
@@ -35,7 +35,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             _fileInfoFactory = fileInfoFactory;
             _directoryInfoFactory = directoryInfoFactory;
 
-            _excludesRegex = regexFactory(actionInputs.ExcludesRegex);
+            _excludesRegex = string.IsNullOrWhiteSpace(actionInputs.ExcludesRegex) ? null : regexFactory(actionInputs.ExcludesRegex) ;
         }
         
         public async Task TraverseAndTranslate()
@@ -70,7 +70,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             } 
             bool IsNotExcluded(FileInfo defaultResXFile)
             {
-                var ret = !_excludesRegex.IsMatch(defaultResXFile.Name);
+                var ret = !(_excludesRegex?.IsMatch(defaultResXFile.Name) ?? false);
                 if(ret) _logger.Notice(defaultResXFile, "Default file excluded by regex");
                 return ret;
             }

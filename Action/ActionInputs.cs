@@ -26,5 +26,13 @@ namespace MrMeeseeks.ResXTranslationCombinator.Action
             Default = "",
             HelpText = "Regex for names of default ResX files in order to decide whether to exclude file from processing.")]
         public string ExcludesRegex { get; set; } = "";
+        
+        [Option(
+            'c', 
+            "data-copies-regex",
+            Required = false,
+            Default = "",
+            HelpText = "Regex for names of default ResX files whose data should be copied instead of translated.")]
+        public string DataCopiesRegex { get; set; } = "";
     }
 }

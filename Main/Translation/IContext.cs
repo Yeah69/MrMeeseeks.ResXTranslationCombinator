@@ -15,27 +15,32 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
     internal class DeepLContext : IContext
     {
         private readonly IActionInputs _actionInputs;
-        private readonly IResXTranslator _resXTranslator;
+        private readonly IResXCombinator<IDeepLTranslator> _deepLCombinator;
+        private readonly IResXCombinator<ICopyTranslator> _copyCombinator;
         private readonly ILogger _logger;
         private readonly Func<string, FileInfo> _fileInfoFactory;
         private readonly Func<string, DirectoryInfo> _directoryInfoFactory;
         private readonly Regex? _excludesRegex;
+        private readonly Regex? _dataCopiesRegex;
 
         public DeepLContext(
             IActionInputs actionInputs,
-            IResXTranslator resXTranslator,
+            IResXCombinator<IDeepLTranslator> deepLCombinator,
+            IResXCombinator<ICopyTranslator> copyCombinator,
             ILogger logger,
             Func<string, FileInfo> fileInfoFactory,
             Func<string, DirectoryInfo> directoryInfoFactory,
             Func<string, Regex> regexFactory)
         {
             _actionInputs = actionInputs;
-            _resXTranslator = resXTranslator;
+            _deepLCombinator = deepLCombinator;
+            _copyCombinator = copyCombinator;
             _logger = logger;
             _fileInfoFactory = fileInfoFactory;
             _directoryInfoFactory = directoryInfoFactory;
 
-            _excludesRegex = string.IsNullOrWhiteSpace(actionInputs.ExcludesRegex) ? null : regexFactory(actionInputs.ExcludesRegex) ;
+            _excludesRegex = string.IsNullOrWhiteSpace(actionInputs.ExcludesRegex) ? null : regexFactory(actionInputs.ExcludesRegex);
+            _dataCopiesRegex = string.IsNullOrWhiteSpace(actionInputs.DataCopiesRegex) ? null : regexFactory(actionInputs.DataCopiesRegex);
         }
         
         public async Task TraverseAndTranslate()
@@ -54,7 +59,12 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 .Select(ToFileInfo)
                 .Where(IsDefaultResxFileName)
                 .Where(IsNotExcluded))
-                await _resXTranslator.Translate(defaultResXFile).ConfigureAwait(false);
+            {
+                await (_dataCopiesRegex?.IsMatch(defaultResXFile.Name) ?? false 
+                    ? _copyCombinator.Translate(defaultResXFile) 
+                    : _deepLCombinator.Translate(defaultResXFile))
+                    .ConfigureAwait(false);
+            }
 
             _logger.SetOutput("summary-title", "Localization");
             _logger.SetOutput("summary-details", "Summary");

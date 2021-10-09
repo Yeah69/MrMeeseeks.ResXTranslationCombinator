@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,11 +8,16 @@ using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
-    internal class DeepLTranslator : ITranslator
+    internal interface IDeepLTranslator : ITranslator
+    {
+        
+    }
+    
+    internal class DeepLTranslator : IDeepLTranslator
     {
         private readonly ILogger _logger;
         private readonly DeepLClient _deepLClient;
-        private CultureInfo[]? _cachedSupportedCultureInfos;
+        private HashSet<CultureInfo>? _cachedSupportedCultureInfos;
 
         public DeepLTranslator(
             IActionInputs actionInputs,
@@ -22,11 +28,13 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             _deepLClient = deepLClientFactory(actionInputs.AuthKey);
         }
 
-        public async Task<CultureInfo[]> GetSupportedCultureInfos()
+        public bool TranslationsShouldBeCached => true;
+
+        public async Task<HashSet<CultureInfo>> GetSupportedCultureInfos()
         {
             return _cachedSupportedCultureInfos ??= await Inner().ConfigureAwait(false);
 
-            async Task<CultureInfo[]> Inner()
+            async Task<HashSet<CultureInfo>> Inner()
             {
                 try
                 {
@@ -35,7 +43,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                         .Select(sl => CultureInfo.GetCultureInfo(sl.LanguageCode))
                         .ToArray();
                     _logger.FileLessNotice($"Currently DeepL supports following CultureInfos: {string.Join(", ", ret.Select(ci => ci.Name))}");
-                    return ret;
+                    return new HashSet<CultureInfo>(ret);
                 }
                 catch (Exception e)
                 {

@@ -11,8 +11,9 @@ using StrongInject.Modules;
 namespace MrMeeseeks.ResXTranslationCombinator.Action
 {
     [Register(typeof(DeepLContext), typeof(IContext))]
-    [Register(typeof(ResXTranslator), typeof(IResXTranslator))]
-    [Register(typeof(DeepLTranslator), typeof(ITranslator))]
+    [Register(typeof(ResXCombinator<>), typeof(IResXCombinator<>))]
+    [Register(typeof(CopyTranslator), Scope.SingleInstance, typeof(ICopyTranslator))]
+    [Register(typeof(DeepLTranslator), Scope.SingleInstance, typeof(IDeepLTranslator))]
     [Register(typeof(DataMappingFactory), typeof(IDataMappingFactory))]
     [Register(typeof(DataMapping), typeof(IDataMapping))]
     

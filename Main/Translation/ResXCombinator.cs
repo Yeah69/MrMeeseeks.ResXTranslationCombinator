@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,7 +10,7 @@ using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
-    public interface IResXTranslator
+    internal interface IResXCombinator<T> where T : ITranslator
     {
         Task Translate(FileInfo defaultResXFile);
     }
@@ -22,7 +21,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         ManuallyOverriden
     }
 
-    internal class ResXTranslator : IResXTranslator
+    internal class ResXCombinator<T> : IResXCombinator<T> where T : ITranslator
     {
         private readonly ITranslator _translator;
         private readonly Func<FileInfo, IResXWriterFactory> _resXWriterFactoryFactory;
@@ -31,8 +30,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         private readonly IDataMappingFactory _dataMappingFactory;
         private readonly ILogger _logger;
 
-        public ResXTranslator(
-            ITranslator translator,
+        public ResXCombinator(
+            T translator,
             Func<FileInfo, IResXWriterFactory> resXWriterFactoryFactory,
             Func<(string Name, string Value, string Comment), IResXNode> resXNodeFactory,
             Func<string, FileInfo> fileInfoFactory,
@@ -59,7 +58,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
             var orderedDefaultKeys = dataMapping.Default.Keys.ToImmutableSortedSet();
 
-            var supportedCultureInfos = new HashSet<CultureInfo>(await _translator.GetSupportedCultureInfos().ConfigureAwait(false));
+            var supportedCultureInfos = await _translator.GetSupportedCultureInfos().ConfigureAwait(false);
             
             // Update automatics
             foreach (var supportedCultureInfo in supportedCultureInfos)
@@ -87,17 +86,20 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                     var file = _fileInfoFactory(Path.Combine(defaultResXFile.DirectoryName ?? "",
                         $"{defaultResXFile.Name[..defaultResXFile.Name.IndexOf('.')]}.{supportedCultureInfo.Name}.a{defaultResXFile.Extension}"));
                     _logger.Notice(file, "New translations added");
-                    
-                    var resXResourceWriter = placeholder.Create(file);
-                    foreach (var keyValuePair in acc.OrderBy(kvp => kvp.Key))
+
+                    if (_translator.TranslationsShouldBeCached)
                     {
-                        var resXDataNode = _resXNodeFactory((
-                            keyValuePair.Key, 
-                            keyValuePair.Value,
-                            "Automatically Translated"));
-                        resXResourceWriter.AddResource(resXDataNode);
+                        var resXResourceWriter = placeholder.Create(file);
+                        foreach (var keyValuePair in acc.OrderBy(kvp => kvp.Key))
+                        {
+                            var resXDataNode = _resXNodeFactory((
+                                keyValuePair.Key, 
+                                keyValuePair.Value,
+                                "Automatically Translated"));
+                            resXResourceWriter.AddResource(resXDataNode);
+                        }
+                        resXResourceWriter.Generate();
                     }
-                    resXResourceWriter.Generate();
                 }
             }
             

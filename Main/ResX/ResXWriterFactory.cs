@@ -1,27 +1,34 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.ResX
 {
     public interface IResXWriterFactory
     {
-        IResXWriter Create(string path);
+        IResXWriter Create(FileInfo file);
     }
 
     internal class ResXWriterFactory : IResXWriterFactory
     {
-        private readonly Func<string, IResXElementsFactory, IResXWriter> _resXWriterFactory;
+        private readonly Func<FileInfo, IResXElementsFactory, IResXWriter> _resXWriterFactory;
         private readonly IResXElementsFactory _resxElementsFactoryFactory;
 
         public ResXWriterFactory(
-            string pathOriginal,
+            // parameters
+            FileInfo file,
             
+            // dependencies
             Func<(XElement RootTemplate, XElement DataTemplate), IResXElementsFactory> resXElementsFactoryFactory,
-            Func<string, IResXElementsFactory, IResXWriter> resXWriterFactory)
+            Func<FileInfo, IResXElementsFactory, IResXWriter> resXWriterFactory,
+            ILogger logger)
         {
             _resXWriterFactory = resXWriterFactory;
-            var xDocument = XDocument.Load(pathOriginal);
+            
+            logger.Notice(file, "Creating ResX root- and data-template from default ResX file");
+            var xDocument = XDocument.Load(file.FullName);
             var root = xDocument.Root ?? throw new Exception("No root node"); 
             var dataElement = root.Element("data") ?? throw new Exception("No data element");
             dataElement.RemoveNodes();
@@ -33,6 +40,6 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
             _resxElementsFactoryFactory = resXElementsFactoryFactory((root, dataElement));
         }
 
-        public IResXWriter Create(string path) => _resXWriterFactory(path, _resxElementsFactoryFactory);
+        public IResXWriter Create(FileInfo file) => _resXWriterFactory(file, _resxElementsFactoryFactory);
     }
 }

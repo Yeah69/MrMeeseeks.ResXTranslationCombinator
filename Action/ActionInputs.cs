@@ -21,10 +21,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.Action
         
         [Option(
             'e', 
-            "excludes",
+            "excludes-regex",
             Required = false,
-            Default = "[]",
-            HelpText = "Default files or directories to exclude. Relative paths are relative to directory given by 'd'/'dir'.")]
-        public string Excludes { get; set; } = "[]";
+            Default = "",
+            HelpText = "Regex for names of default ResX files in order to decide whether to exclude file from processing.")]
+        public string ExcludesRegex { get; set; } = "";
     }
 }

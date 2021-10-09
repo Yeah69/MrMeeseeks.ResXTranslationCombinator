@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
@@ -14,42 +16,64 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
     {
         private readonly IActionInputs _actionInputs;
         private readonly IResXTranslator _resXTranslator;
+        private readonly ILogger _logger;
+        private readonly Func<string, FileInfo> _fileInfoFactory;
+        private readonly Func<string, DirectoryInfo> _directoryInfoFactory;
+        private readonly Regex _excludesRegex;
 
         public DeepLContext(
             IActionInputs actionInputs,
-            IResXTranslator resXTranslator)
+            IResXTranslator resXTranslator,
+            ILogger logger,
+            Func<string, FileInfo> fileInfoFactory,
+            Func<string, DirectoryInfo> directoryInfoFactory,
+            Func<string, Regex> regexFactory)
         {
             _actionInputs = actionInputs;
             _resXTranslator = resXTranslator;
+            _logger = logger;
+            _fileInfoFactory = fileInfoFactory;
+            _directoryInfoFactory = directoryInfoFactory;
+
+            _excludesRegex = regexFactory(actionInputs.ExcludesRegex);
         }
         
         public async Task TraverseAndTranslate()
         {
-            var rootDirectory = new DirectoryInfo(_actionInputs.Directory);
+            var rootDirectory = _directoryInfoFactory(_actionInputs.Directory);
             if (!rootDirectory.Exists)
             {
-                Console.WriteLine("[Warning] Given root directory doesn't exist! Aborting!");
+                _logger.FileLessError("Given root directory doesn't exist! Aborting!");
                 return;
             }
             
+            _logger.FileLessNotice($"Setting current directory to: {rootDirectory.FullName}");
             Directory.SetCurrentDirectory(rootDirectory.FullName);
 
-            var defaultResXFiles = Directory.EnumerateFiles(".", "*.resx", SearchOption.AllDirectories)
-                .Select(p => new FileInfo(p))
-                .Where(fi => fi.Name.Split('.').Length == 2)
-                .ToList();
-    
-            foreach (var defaultResXFile in defaultResXFiles)
+            foreach (var defaultResXFile in Directory.EnumerateFiles(".", "*.resx", SearchOption.AllDirectories)
+                .Select(ToFileInfo)
+                .Where(IsDefaultResxFileName)
+                .Where(IsNotExcluded))
+                await _resXTranslator.Translate(defaultResXFile).ConfigureAwait(false);
+
+            _logger.SetOutput("summary-title", "Localization");
+            _logger.SetOutput("summary-details", "Summary");
+            
+            // Local functions
+            FileInfo ToFileInfo(string p) => _fileInfoFactory(p);
+            bool IsDefaultResxFileName(FileInfo fi)
             {
-                await _resXTranslator.Translate(defaultResXFile.FullName).ConfigureAwait(false);
+                // a default ResX file has only one dot
+                var ret = fi.Name.EndsWith(".resx") && fi.Name.Count(c => c == '.') == 1;
+                if(ret) _logger.Notice(fi, "Default ResX file spotted");
+                return ret;
+            } 
+            bool IsNotExcluded(FileInfo defaultResXFile)
+            {
+                var ret = !_excludesRegex.IsMatch(defaultResXFile.Name);
+                if(ret) _logger.Notice(defaultResXFile, "Default file excluded by regex");
+                return ret;
             }
-
-            const string title = "Localization";
-            const string summary = "Summary";
-
-            // https://docs.github.com/actions/reference/workflow-commands-for-github-actions#setting-an-output-parameter
-            Console.WriteLine($"::set-output name=summary-title::{title}");
-            Console.WriteLine($"::set-output name=summary-details::{summary}");
         }
     }
 }

@@ -1,4 +1,6 @@
+using System.IO;
 using System.Xml.Linq;
+using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.ResX
 {
@@ -10,16 +12,22 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
 
     internal class ResXWriter : IResXWriter
     {
-        private readonly string _path;
+        private readonly FileInfo _file;
         private readonly IResXElementsFactory _resXElementsFactory;
+        private readonly ILogger _logger;
         private readonly XElement _root;
 
         public ResXWriter(
-            string path,
-            IResXElementsFactory resXElementsFactory)
+            // parameters
+            FileInfo file,
+            IResXElementsFactory resXElementsFactory,
+            
+            // dependencies
+            ILogger logger)
         {
-            _path = path;
+            _file = file;
             _resXElementsFactory = resXElementsFactory;
+            _logger = logger;
 
             _root = resXElementsFactory.CreateNewRoot();
         }
@@ -39,7 +47,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
         public void Generate()
         {
             var xDocument = new XDocument(_root);
-            xDocument.Save(_path);
+            xDocument.Save(_file.FullName);
+            _logger.Notice(_file,$"Saving ResX file");
         }
     }
 }

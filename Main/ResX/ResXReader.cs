@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -19,13 +20,13 @@ namespace MrMeeseeks.ResXTranslationCombinator.ResX
 
         public ResXReader(
             // parameters
-            string path,
+            FileInfo file,
             
             // dependencies
             Func<(string Name, string Value, string Comment), IResXNode> resxNodeFactory)
         {
             _resxNodeFactory = resxNodeFactory;
-            _xDocument = XDocument.Load(path);
+            _xDocument = XDocument.Load(file.FullName);
         }
 
         public IEnumerator<IResXNode> GetEnumerator()

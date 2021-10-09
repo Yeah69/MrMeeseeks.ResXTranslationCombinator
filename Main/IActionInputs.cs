@@ -4,6 +4,6 @@ namespace MrMeeseeks.ResXTranslationCombinator
     {
         string Directory { get; }
         string AuthKey { get; }
-        string Excludes { get; }
+        string ExcludesRegex { get; }
     }
 }

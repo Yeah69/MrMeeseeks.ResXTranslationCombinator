@@ -7,12 +7,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using MoreLinq;
 using MrMeeseeks.ResXTranslationCombinator.ResX;
+using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation
 {
     public interface IResXTranslator
     {
-        Task Translate(string pathToDefaultResXFile);
+        Task Translate(FileInfo defaultResXFile);
     }
 
     public enum ResXFileType
@@ -24,43 +25,47 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
     internal class ResXTranslator : IResXTranslator
     {
         private readonly ITranslator _translator;
-        private readonly Func<string, IResXWriterFactory> _resXWriterFactoryFactory;
-        private readonly Func<string, IResXReader> _resXReaderFactory;
+        private readonly Func<FileInfo, IResXWriterFactory> _resXWriterFactoryFactory;
         private readonly Func<(string Name, string Value, string Comment), IResXNode> _resXNodeFactory;
+        private readonly Func<string, FileInfo> _fileInfoFactory;
+        private readonly IDataMappingFactory _dataMappingFactory;
+        private readonly ILogger _logger;
 
         public ResXTranslator(
             ITranslator translator,
-            Func<string, IResXWriterFactory> resXWriterFactoryFactory,
-            Func<string, IResXReader> resXReaderFactory,
-            Func<(string Name, string Value, string Comment), IResXNode> resXNodeFactory)
+            Func<FileInfo, IResXWriterFactory> resXWriterFactoryFactory,
+            Func<(string Name, string Value, string Comment), IResXNode> resXNodeFactory,
+            Func<string, FileInfo> fileInfoFactory,
+            IDataMappingFactory dataMappingFactory,
+            ILogger logger)
         {
             _translator = translator;
             _resXWriterFactoryFactory = resXWriterFactoryFactory;
-            _resXReaderFactory = resXReaderFactory;
             _resXNodeFactory = resXNodeFactory;
+            _fileInfoFactory = fileInfoFactory;
+            _dataMappingFactory = dataMappingFactory;
+            _logger = logger;
         }
         
-        public async Task Translate(string pathToDefaultResXFile)
+        public async Task Translate(FileInfo defaultResXFile)
         {
-            var defaultResourceFile = new FileInfo(pathToDefaultResXFile);
-            if (!defaultResourceFile.Exists)
+            using var _ = _logger.Group($"Generating localizations for file: {defaultResXFile.FullName}");
+            if (!defaultResXFile.Exists)
                 throw new Exception();
 
-            var placeholder = _resXWriterFactoryFactory(pathToDefaultResXFile);
+            var placeholder = _resXWriterFactoryFactory(defaultResXFile);
 
-            var (defaults, automatics, overrides) =
-                GetMappings(pathToDefaultResXFile, _resXReaderFactory);
+            var dataMapping = _dataMappingFactory.Create(defaultResXFile);
 
-            var orderedDefaultKeys = defaults.Keys.ToImmutableSortedSet();
+            var orderedDefaultKeys = dataMapping.Default.Keys.ToImmutableSortedSet();
 
             var supportedCultureInfos = new HashSet<CultureInfo>(await _translator.GetSupportedCultureInfos().ConfigureAwait(false));
-            
             
             // Update automatics
             foreach (var supportedCultureInfo in supportedCultureInfos)
             {
                 
-                var mapping = automatics.TryGetValue(supportedCultureInfo, out var val)
+                var mapping = dataMapping.Automatics.TryGetValue(supportedCultureInfo, out var val)
                     ? val
                     : ImmutableDictionary<string, string>.Empty;
 
@@ -68,7 +73,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
                 var areThereAddition = false;
 
-                foreach (var batch in defaults.Where(d => !mapping.ContainsKey(d.Key)).Batch(50).Select(b => b.ToArray()))
+                foreach (var batch in dataMapping.Default.Where(d => !mapping.ContainsKey(d.Key)).Batch(50).Select(b => b.ToArray()))
                 {
                     var translatedValues = await _translator.Translate(batch.Select(b => b.Value).ToArray(), supportedCultureInfo).ConfigureAwait(false);
                     acc = acc.AddRange(batch.Zip(translatedValues, (b, t) => new KeyValuePair<string, string>(b.Key, t)));
@@ -77,11 +82,13 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
                 if (areThereAddition)
                 {
-                    automatics = automatics.Remove(supportedCultureInfo);
-                    automatics = automatics.Add(supportedCultureInfo, acc);
-                    var resXResourceWriter = placeholder.Create(
-                        Path.Combine(defaultResourceFile.DirectoryName ?? "", 
-                            $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{supportedCultureInfo.Name}.a{defaultResourceFile.Extension}"));
+                    dataMapping.Automatics = dataMapping.Automatics.Remove(supportedCultureInfo).Add(supportedCultureInfo, acc);
+                    
+                    var file = _fileInfoFactory(Path.Combine(defaultResXFile.DirectoryName ?? "",
+                        $"{defaultResXFile.Name[..defaultResXFile.Name.IndexOf('.')]}.{supportedCultureInfo.Name}.a{defaultResXFile.Extension}"));
+                    _logger.Notice(file, "New translations added");
+                    
+                    var resXResourceWriter = placeholder.Create(file);
                     foreach (var keyValuePair in acc.OrderBy(kvp => kvp.Key))
                     {
                         var resXDataNode = _resXNodeFactory((
@@ -95,17 +102,17 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             }
             
             // Generate combined ResX files
-            foreach (var cultureInfo in supportedCultureInfos.Concat(overrides.Select(kvp => kvp.Key)).Distinct())
+            foreach (var cultureInfo in supportedCultureInfos.Concat(dataMapping.Overrides.Select(kvp => kvp.Key)).Distinct())
             {
                 var resXResourceWriter = placeholder.Create(
-                    Path.Combine(defaultResourceFile.DirectoryName ?? "", 
-                        $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{cultureInfo.Name}{defaultResourceFile.Extension}"));
+                    _fileInfoFactory(Path.Combine(defaultResXFile.DirectoryName ?? "", 
+                        $"{defaultResXFile.Name[..defaultResXFile.Name.IndexOf('.')]}.{cultureInfo.Name}{defaultResXFile.Extension}")));
 
-                var overrideMapping = overrides.TryGetValue(cultureInfo, out var o)
+                var overrideMapping = dataMapping.Overrides.TryGetValue(cultureInfo, out var o)
                     ? o
                     : ImmutableDictionary<string, string>.Empty;
 
-                var automaticMapping = automatics.TryGetValue(cultureInfo, out var a)
+                var automaticMapping = dataMapping.Automatics.TryGetValue(cultureInfo, out var a)
                     ? a
                     : ImmutableDictionary<string, string>.Empty;
                 
@@ -131,11 +138,11 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 resXResourceWriter.Generate();
             }
             
-            foreach (var overrideItem in overrides)
+            foreach (var overrideItem in dataMapping.Overrides)
             {
                 var resXResourceWriter = placeholder.Create(
-                    Path.Combine(defaultResourceFile.DirectoryName ?? "", 
-                        $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.{overrideItem.Key.Name}.o{defaultResourceFile.Extension}"));
+                    _fileInfoFactory(Path.Combine(defaultResXFile.DirectoryName ?? "", 
+                        $"{defaultResXFile.Name[..defaultResXFile.Name.IndexOf('.')]}.{overrideItem.Key.Name}.o{defaultResXFile.Extension}")));
                 foreach (var key in orderedDefaultKeys)
                 {
                     var resXDataNode = _resXNodeFactory((key, overrideItem.Value.TryGetValue(key, out var value) ? value : "", ""));
@@ -145,8 +152,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             }
             
             var templateResXResourceWriter = placeholder.Create(
-                Path.Combine(defaultResourceFile.DirectoryName ?? "", 
-                    $"{defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')]}.template.o{defaultResourceFile.Extension}"));
+                _fileInfoFactory(Path.Combine(defaultResXFile.DirectoryName ?? "", 
+                    $"{defaultResXFile.Name[..defaultResXFile.Name.IndexOf('.')]}.template.o{defaultResXFile.Extension}")));
                 
             foreach (var key in orderedDefaultKeys)
             {
@@ -154,72 +161,6 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 templateResXResourceWriter.AddResource(resXDataNode);
             }
             templateResXResourceWriter.Generate();
-        }
-
-        private static (IImmutableDictionary<string, string> Default,
-            IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Automatics,
-            IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides) GetMappings(
-                string pathToDefaultResXFile,
-                Func<string, IResXReader> resXReaderFactory)
-        {
-            var defaultResourceFile = new FileInfo(pathToDefaultResXFile);
-            if (!defaultResourceFile.Exists)
-                throw new Exception();
-            var reader = resXReaderFactory(defaultResourceFile.FullName);
-
-            var defaultResXFileNameWithoutExtension = defaultResourceFile.Name[..defaultResourceFile.Name.IndexOf('.')];
-
-            var defaults = GetKeyValuesFromReader(reader, true);
-
-            var aAndO = Directory.GetFiles(defaultResourceFile.DirectoryName!)
-                .Select(p => new FileInfo(p))
-                .Select(fi => (fi.Name.Split('.'), fi))
-                .Where(t =>
-                {
-                    var nameParts = t.Item1;
-                    return nameParts.Length == 4
-                           && nameParts[0] == defaultResXFileNameWithoutExtension
-                           && DoesCultureExist(nameParts[1])
-                           && (nameParts[2] == "a" || nameParts[2] == "o")
-                           && $".{nameParts[3]}" == defaultResourceFile.Extension;
-                })
-                .Select(t => (
-                    CultureInfo: CultureInfo.GetCultureInfo(t.Item1[1]),
-                    Type: t.Item1[2] == "a"
-                        ? ResXFileType.AutomaticallyTranslated
-                        : ResXFileType.ManuallyOverriden,
-                    FileInfo: t.fi))
-                .ToList();
-
-            var automatics = AandOToDictionary(aAndO, ResXFileType.AutomaticallyTranslated, resXReaderFactory);
-
-            var overrides = AandOToDictionary(aAndO, ResXFileType.ManuallyOverriden, resXReaderFactory);
-
-            return (defaults, automatics, overrides);
-            
-            static IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> AandOToDictionary(
-                IEnumerable<(CultureInfo CultureInfo, ResXFileType Type, FileInfo FileInfo)> aAndO,
-                ResXFileType filterType,
-                Func<string, IResXReader> resXReaderFactory) =>
-                aAndO
-                    .Where(t => t.Type == filterType)
-                    .Select(t =>
-                    {
-                        var reader = resXReaderFactory(t.FileInfo.FullName);
-                        return (t.CultureInfo, Map: GetKeyValuesFromReader(reader, false));
-                    })
-                    .ToImmutableDictionary(t => t.CultureInfo, t => t.Map);
-            
-            static IImmutableDictionary<string, string> GetKeyValuesFromReader(IResXReader reader, bool isDefault) => 
-                reader
-                    .Select(rdn => (rdn.Name, rdn.Value))
-                    .Where(t => isDefault || !string.IsNullOrWhiteSpace(t.Value))
-                    .ToImmutableDictionary(t => t.Name, t => t.Value);
-			
-            // https://stackoverflow.com/a/16476935/4871837 Thanks
-            static bool DoesCultureExist(string cultureName) => CultureInfo
-                .GetCultures(CultureTypes.AllCultures)
-                .Any(culture => string.Equals(culture.Name, cultureName, StringComparison.CurrentCultureIgnoreCase));
         }
     }
 }

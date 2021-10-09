@@ -34,8 +34,6 @@ jobs:
         id: translator
         uses: Yeah69/MrMeeseeks.ResXTranslationCombinator@main
         with:
-          # Take root directory of the repository as directory to search for the ResX files
-          dir: ${{ './' }}
           # The authentication key of the DeepL API access
           auth: ${{ secrets.DEEPL_API_AUTH_KEY }}
 

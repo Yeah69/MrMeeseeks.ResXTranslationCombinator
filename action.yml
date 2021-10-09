@@ -6,10 +6,19 @@ branding:
 inputs:
   dir:
     description: 'The root directory to work from. Example, "path/to/code".'
-    required: true
+    required: false
+    default: '.'
   auth:
     description: 'Auth key for your DeepL API access.'
     required: true
+  excludes-regex:
+    description: 'Regex for names of default ResX files in order to decide whether to exclude file from processing.'
+    required: false
+    default: ''
+  data-copies-regex:
+    description: 'Regex for names of default ResX files whose data should be copied instead of translated.'
+    required: false
+    default: ''
 outputs:
   summary-title:
     description: 'The title of the commit for the pull request.'
@@ -23,3 +32,7 @@ runs:
   - ${{ inputs.dir }}
   - '-a'
   - ${{ inputs.auth }}
+  - '-e'
+  - ${{ inputs.excludes-regex }}
+  - '-c'
+  - ${{ inputs.data-copies-regex }}

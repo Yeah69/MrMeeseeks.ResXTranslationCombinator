@@ -38,7 +38,9 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             _logger = logger;
             _fileInfoFactory = fileInfoFactory;
             _directoryInfoFactory = directoryInfoFactory;
-
+            
+            if (actionInputs.ToString() is {} message)
+                _logger.FileLessNotice(message);
             _excludesRegex = string.IsNullOrWhiteSpace(actionInputs.ExcludesRegex) ? null : regexFactory(actionInputs.ExcludesRegex);
             _dataCopiesRegex = string.IsNullOrWhiteSpace(actionInputs.DataCopiesRegex) ? null : regexFactory(actionInputs.DataCopiesRegex);
         }
@@ -81,7 +83,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
             bool IsNotExcluded(FileInfo defaultResXFile)
             {
                 var ret = !(_excludesRegex?.IsMatch(defaultResXFile.Name) ?? false);
-                if(ret) _logger.Notice(defaultResXFile, "Default file excluded by regex");
+                if(!ret) _logger.Notice(defaultResXFile, "Default file excluded by regex");
                 return ret;
             }
         }

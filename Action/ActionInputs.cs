@@ -34,5 +34,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Action
             Default = "",
             HelpText = "Regex for names of default ResX files whose data should be copied instead of translated.")]
         public string DataCopiesRegex { get; set; } = "";
+
+        public override string ToString() => 
+            $"{nameof(ActionInputs)} => {nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}";
     }
 }

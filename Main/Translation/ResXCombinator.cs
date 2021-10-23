@@ -53,8 +53,11 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 throw new Exception();
 
             var placeholder = _resXWriterFactoryFactory(defaultResXFile);
-
+            
             var dataMapping = _dataMappingFactory.Create(defaultResXFile);
+            
+            // Don't generate files where no texts are translated
+            if (!dataMapping.Keys.Any()) return;
 
             var orderedDefaultKeys = dataMapping.Keys.ToImmutableSortedSet();
 

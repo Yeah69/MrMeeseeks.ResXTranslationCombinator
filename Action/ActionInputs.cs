@@ -34,8 +34,16 @@ namespace MrMeeseeks.ResXTranslationCombinator.Action
             Default = "",
             HelpText = "Regex for names of default ResX files whose data should be copied instead of translated.")]
         public string DataCopiesRegex { get; set; } = "";
+        
+        [Option(
+            'f', 
+            "filter-keys-with-overrides",
+            Required = false,
+            Default = false,
+            HelpText = "If set the default keys are filtered by the super set of override keys per ResX file family.")]
+        public bool TakeOverridesKeysSuperSetAsKeyFilter { get; set; }
 
         public override string ToString() => 
-            $"{nameof(ActionInputs)} => {nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}";
+            $"{nameof(Directory)}: {Directory}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}, {nameof(TakeOverridesKeysSuperSetAsKeyFilter)}: {TakeOverridesKeysSuperSetAsKeyFilter}";
     }
 }

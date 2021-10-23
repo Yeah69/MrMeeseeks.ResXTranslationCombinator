@@ -16,19 +16,28 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
     internal class DataMappingFactory : IDataMappingFactory
     {
+        private readonly IActionInputs _actionInputs;
         private readonly Func<FileInfo, IResXReader> _resXReaderFactory;
-        private readonly Func<(IImmutableDictionary<string, string> Default, IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Automatics, IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides), IDataMapping> _dataMappingFactory;
+        private readonly Func<IReadOnlySet<string>,
+            (IImmutableDictionary<string, string> Default,
+            IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Automatics,
+            IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides), 
+            IDataMapping> _dataMappingFactory;
         private readonly Func<string, FileInfo> _fileInfoFactory;
         private readonly ILogger _logger;
 
         public DataMappingFactory(
+            IActionInputs actionInputs,
             Func<FileInfo, IResXReader> resXReaderFactory,
-            Func<(IImmutableDictionary<string, string> Default,
+            Func<IReadOnlySet<string>,
+                (IImmutableDictionary<string, string> Default,
                 IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Automatics,
-                IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides), IDataMapping> dataMappingFactory,
+                IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> Overrides), 
+                IDataMapping> dataMappingFactory,
             Func<string, FileInfo> fileInfoFactory,
             ILogger logger)
         {
+            _actionInputs = actionInputs;
             _resXReaderFactory = resXReaderFactory;
             _dataMappingFactory = dataMappingFactory;
             _fileInfoFactory = fileInfoFactory;
@@ -68,7 +77,19 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
             var overrides = AandOToDictionary(aAndO, ResXFileType.ManuallyOverriden, _resXReaderFactory);
 
-            return _dataMappingFactory((defaults, automatics, overrides));
+            IReadOnlySet<string> keys = new HashSet<string>(defaults.Keys);
+            if (_actionInputs.TakeOverridesKeysSuperSetAsKeyFilter)
+            {
+                var hashSet = overrides
+                    .Select(d => d.Value)
+                    .SelectMany(d => d.Keys)
+                    .Distinct()
+                    .ToHashSet();
+                hashSet.IntersectWith(keys);
+                keys = hashSet;
+            }
+
+            return _dataMappingFactory(keys, (defaults, automatics, overrides));
             
             static IImmutableDictionary<CultureInfo, IImmutableDictionary<string, string>> AandOToDictionary(
                 IEnumerable<(CultureInfo CultureInfo, ResXFileType Type, FileInfo FileInfo)> aAndO,

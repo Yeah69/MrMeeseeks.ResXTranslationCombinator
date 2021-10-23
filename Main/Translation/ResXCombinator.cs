@@ -56,9 +56,14 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
             var dataMapping = _dataMappingFactory.Create(defaultResXFile);
 
-            var orderedDefaultKeys = dataMapping.Default.Keys.ToImmutableSortedSet();
+            var orderedDefaultKeys = dataMapping.Keys.ToImmutableSortedSet();
 
             var supportedCultureInfos = await _translator.GetSupportedCultureInfos().ConfigureAwait(false);
+
+            IReadOnlyList<KeyValuePair<string, string>> defaultKeyValuePairsToTranslate = dataMapping
+                .Default
+                .Where(kvp => orderedDefaultKeys.Contains(kvp.Key))
+                .ToList();
             
             // Update automatics
             foreach (var supportedCultureInfo in supportedCultureInfos)
@@ -72,7 +77,10 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
 
                 var areThereAddition = false;
 
-                foreach (var batch in dataMapping.Default.Where(d => !mapping.ContainsKey(d.Key)).Batch(50).Select(b => b.ToArray()))
+                foreach (var batch in defaultKeyValuePairsToTranslate
+                    .Where(d => !mapping.ContainsKey(d.Key))
+                    .Batch(50) // Todo the fifties batching is a DeepL specific it would make more sense to move it to the DeepLTranslator implementation
+                    .Select(b => b.ToArray()))
                 {
                     var translatedValues = await _translator.Translate(batch.Select(b => b.Value).ToArray(), supportedCultureInfo).ConfigureAwait(false);
                     acc = acc.AddRange(batch.Zip(translatedValues, (b, t) => new KeyValuePair<string, string>(b.Key, t)));

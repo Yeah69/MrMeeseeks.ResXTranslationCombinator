@@ -6,5 +6,6 @@ namespace MrMeeseeks.ResXTranslationCombinator
         string AuthKey { get; }
         string ExcludesRegex { get; }
         string DataCopiesRegex { get; }
+        bool TakeOverridesKeysSuperSetAsKeyFilter { get; } 
     }
 }

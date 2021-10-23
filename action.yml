@@ -19,6 +19,10 @@ inputs:
     description: 'Regex for names of default ResX files whose data should be copied instead of translated.'
     required: false
     default: ''
+  filter-keys-with-overrides:
+    description: 'If set the default keys are filtered by the super set of override keys per ResX file family.'
+    required: false
+    default: 'false'
 outputs:
   summary-title:
     description: 'The title of the commit for the pull request.'
@@ -36,3 +40,5 @@ runs:
   - ${{ inputs.excludes-regex }}
   - '-c'
   - ${{ inputs.data-copies-regex }}
+  - '-f'
+  - ${{ inputs.filter-keys-with-overrides }}

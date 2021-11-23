@@ -16,12 +16,12 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
     internal class DeepLTranslator : IDeepLTranslator
     {
         private readonly ILogger _logger;
-        private readonly DeepLClient _deepLClient;
+        private readonly Translator _deepLClient;
         private HashSet<CultureInfo>? _cachedSupportedCultureInfos;
 
         public DeepLTranslator(
             IActionInputs actionInputs,
-            Func<string, DeepLClient> deepLClientFactory,
+            Func<string, Translator> deepLClientFactory,
             ILogger logger)
         {
             _logger = logger;
@@ -39,8 +39,8 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
                 try
                 {
                     _logger.FileLessNotice("Fetching supported CultureInfos from DeepL");   
-                    var ret = (await _deepLClient.GetSupportedLanguagesAsync().ConfigureAwait(false))
-                        .Select(sl => CultureInfo.GetCultureInfo(sl.LanguageCode))
+                    var ret = (await _deepLClient.GetTargetLanguagesAsync().ConfigureAwait(false))
+                        .Select(sl => sl.CultureInfo)
                         .ToArray();
                     _logger.FileLessNotice($"Currently DeepL supports following CultureInfos: {string.Join(", ", ret.Select(ci => ci.Name))}");
                     return new HashSet<CultureInfo>(ret);
@@ -59,9 +59,14 @@ namespace MrMeeseeks.ResXTranslationCombinator.Translation
         {
             try
             {
-                var translations = await _deepLClient.TranslateAsync(
+                var translations = await _deepLClient.TranslateTextAsync(
                     sourceTexts,
-                    targetLanguageCode.TwoLetterISOLanguageName
+                    null,
+                    targetLanguageCode.Name,
+                    new TextTranslateOptions
+                    {
+                        PreserveFormatting = true
+                    }
                 );
 
                 return translations.Select(t => t.Text).ToArray();

@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 using DeepL;
 using MrMeeseeks.ResXTranslationCombinator.ResX;
 using MrMeeseeks.ResXTranslationCombinator.Translation;
@@ -25,7 +24,7 @@ namespace MrMeeseeks.ResXTranslationCombinator.Action
     
     [Register(typeof(Logger), typeof(ILogger))]
     
-    [Register(typeof(DeepLClient))]
+    [Register(typeof(Translator))]
     [Register(typeof(FileInfo))]
     [Register(typeof(DirectoryInfo))]
     

@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DeepL" Version="0.3.0" />
+    <PackageReference Include="DeepL.net" Version="1.0.0" />
     <PackageReference Include="morelinq" Version="3.3.2" />
     <PackageReference Include="System.Reactive" Version="5.0.0" />
   </ItemGroup>

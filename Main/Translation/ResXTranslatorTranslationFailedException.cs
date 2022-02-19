@@ -1,12 +1,9 @@
-using System;
+namespace MrMeeseeks.ResXTranslationCombinator.Translation;
 
-namespace MrMeeseeks.ResXTranslationCombinator.Translation
+public class ResXTranslatorTranslationFailedException : Exception
 {
-    public class ResXTranslatorTranslationFailedException : Exception
+    public ResXTranslatorTranslationFailedException(
+        Exception innerException) : base("Translation failed.", innerException)
     {
-        public ResXTranslatorTranslationFailedException(
-            Exception innerException) : base("Translation failed.", innerException)
-        {
-        }
     }
 }

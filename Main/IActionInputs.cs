@@ -1,11 +1,12 @@
-namespace MrMeeseeks.ResXTranslationCombinator
+namespace MrMeeseeks.ResXTranslationCombinator;
+
+public interface IActionInputs
 {
-    public interface IActionInputs
-    {
-        string Directory { get; }
-        string AuthKey { get; }
-        string ExcludesRegex { get; }
-        string DataCopiesRegex { get; }
-        bool TakeOverridesKeysSuperSetAsKeyFilter { get; } 
-    }
+    string Directory { get; }
+    string AuthKey { get; }
+    string ExcludesRegex { get; }
+    string DataCopiesRegex { get; }
+    bool TakeOverridesKeysSuperSetAsKeyFilter { get; } 
+    string LocalizationFilter { get; }
+    string LocalizationExcludes { get; }
 }

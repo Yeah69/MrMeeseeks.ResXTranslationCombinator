@@ -1,11 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
     <RootNamespace>MrMeeseeks.ResXTranslationCombinator</RootNamespace>
     <AssemblyName>MrMeeseeks.ResXTranslationCombinator</AssemblyName>
+    <LangVersion>10</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

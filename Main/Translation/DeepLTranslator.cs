@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DeepL;
 using MrMeeseeks.ResXTranslationCombinator.Utility;
@@ -50,6 +51,8 @@ internal class DeepLTranslator : IDeepLTranslator
         }
     }
 
+    private static readonly Regex HotkeyPrefixRegex = new("&([a-zA-Z0-9])", RegexOptions.Compiled);
+
     public async Task<string[]> Translate(
         string[] sourceTexts, 
         CultureInfo targetLanguageCode)
@@ -57,7 +60,7 @@ internal class DeepLTranslator : IDeepLTranslator
         try
         {
             var translations = await _deepLClient.TranslateTextAsync(
-                sourceTexts,
+                sourceTexts.Select(t => HotkeyPrefixRegex.Replace(t, "$1")),
                 null,
                 targetLanguageCode.Name,
                 new TextTranslateOptions

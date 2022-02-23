@@ -11,6 +11,10 @@ inputs:
   auth:
     description: 'Auth key for your DeepL API access.'
     required: true
+  source-lang:
+    description: 'The language used in the original ResX files. Leave empty to auto-detect.'
+    required: false
+    default: ''    
   excludes-regex:
     description: 'Regex for names of default ResX files in order to decide whether to exclude file from processing.'
     required: false
@@ -44,6 +48,8 @@ runs:
   - ${{ inputs.dir }}
   - '-a'
   - ${{ inputs.auth }}
+  - '-s'
+  - ${{ inputs.source-lang }}
   - '-e'
   - ${{ inputs.excludes-regex }}
   - '-c'

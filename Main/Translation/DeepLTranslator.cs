@@ -17,6 +17,7 @@ internal class DeepLTranslator : IDeepLTranslator
     private readonly ILogger _logger;
     private readonly Translator _deepLClient;
     private IImmutableSet<CultureInfo>? _cachedSupportedCultureInfos;
+    private string? _sourceLanguage;
 
     public DeepLTranslator(
         IActionInputs actionInputs,
@@ -25,6 +26,7 @@ internal class DeepLTranslator : IDeepLTranslator
     {
         _logger = logger;
         _deepLClient = deepLClientFactory(actionInputs.AuthKey);
+        _sourceLanguage = string.IsNullOrEmpty(actionInputs.SourceLang) ? null : actionInputs.SourceLang;
     }
 
     public bool TranslationsShouldBeCached => true;
@@ -66,7 +68,7 @@ internal class DeepLTranslator : IDeepLTranslator
                 sourceTexts.Select(t => PlaceholderRegex.Replace(
                     HttpUtility.HtmlEncode(HotkeyPrefixRegex.Replace(t, "$1")),
                     "<placeholder>$1</placeholder>")),
-                null,
+                _sourceLanguage,
                 targetLanguageCode.Name,
                 new TextTranslateOptions
                 {

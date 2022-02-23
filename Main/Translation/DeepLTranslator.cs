@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using DeepL;
 using MrMeeseeks.ResXTranslationCombinator.Utility;
 
@@ -52,6 +53,8 @@ internal class DeepLTranslator : IDeepLTranslator
     }
 
     private static readonly Regex HotkeyPrefixRegex = new("&([a-zA-Z0-9])", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = new("{([0-9])}", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderReverseRegex = new("<placeholder>([0-9])</placeholder>", RegexOptions.Compiled);
 
     public async Task<string[]> Translate(
         string[] sourceTexts, 
@@ -60,16 +63,20 @@ internal class DeepLTranslator : IDeepLTranslator
         try
         {
             var translations = await _deepLClient.TranslateTextAsync(
-                sourceTexts.Select(t => HotkeyPrefixRegex.Replace(t, "$1")),
+                sourceTexts.Select(t => PlaceholderRegex.Replace(
+                    HttpUtility.HtmlEncode(HotkeyPrefixRegex.Replace(t, "$1")),
+                    "<placeholder>$1</placeholder>")),
                 null,
                 targetLanguageCode.Name,
                 new TextTranslateOptions
                 {
-                    PreserveFormatting = true
+                    PreserveFormatting = true,
+                    TagHandling = "xml",
+                    IgnoreTags = { "placeholder" }
                 }
             );
 
-            return translations.Select(t => t.Text).ToArray();
+            return translations.Select(t => PlaceholderReverseRegex.Replace(HttpUtility.HtmlDecode(t.Text), "{$1}")).ToArray();
         }
         catch (Exception exception)
         {

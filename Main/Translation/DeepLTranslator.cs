@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web;
 using DeepL;
 using MrMeeseeks.ResXTranslationCombinator.Utility;
 
@@ -15,6 +17,7 @@ internal class DeepLTranslator : IDeepLTranslator
     private readonly ILogger _logger;
     private readonly Translator _deepLClient;
     private IImmutableSet<CultureInfo>? _cachedSupportedCultureInfos;
+    private string? _sourceLanguage;
 
     public DeepLTranslator(
         IActionInputs actionInputs,
@@ -23,6 +26,7 @@ internal class DeepLTranslator : IDeepLTranslator
     {
         _logger = logger;
         _deepLClient = deepLClientFactory(actionInputs.AuthKey);
+        _sourceLanguage = string.IsNullOrEmpty(actionInputs.SourceLang) ? null : actionInputs.SourceLang;
     }
 
     public bool TranslationsShouldBeCached => true;
@@ -50,6 +54,10 @@ internal class DeepLTranslator : IDeepLTranslator
         }
     }
 
+    private static readonly Regex HotkeyPrefixRegex = new("&([a-zA-Z0-9])", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = new("{([0-9])}", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderReverseRegex = new("<placeholder>([0-9])</placeholder>", RegexOptions.Compiled);
+
     public async Task<string[]> Translate(
         string[] sourceTexts, 
         CultureInfo targetLanguageCode)
@@ -57,16 +65,20 @@ internal class DeepLTranslator : IDeepLTranslator
         try
         {
             var translations = await _deepLClient.TranslateTextAsync(
-                sourceTexts,
-                null,
+                sourceTexts.Select(t => PlaceholderRegex.Replace(
+                    HttpUtility.HtmlEncode(HotkeyPrefixRegex.Replace(t, "$1")),
+                    "<placeholder>$1</placeholder>")),
+                _sourceLanguage,
                 targetLanguageCode.Name,
                 new TextTranslateOptions
                 {
-                    PreserveFormatting = true
+                    PreserveFormatting = true,
+                    TagHandling = "xml",
+                    IgnoreTags = { "placeholder" }
                 }
             );
 
-            return translations.Select(t => t.Text).ToArray();
+            return translations.Select(t => PlaceholderReverseRegex.Replace(HttpUtility.HtmlDecode(t.Text), "{$1}")).ToArray();
         }
         catch (Exception exception)
         {

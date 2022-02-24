@@ -20,6 +20,14 @@ public class ActionInputs : IActionInputs
     public string AuthKey { get; set; } = "";
         
     [Option(
+        's', 
+        "source-lang",
+        Required = false,
+        Default = "",
+        HelpText = "The language used in the original ResX files. Leave empty to auto-detect.")]
+    public string SourceLang { get; set; } = "";
+        
+    [Option(
         'e', 
         "excludes-regex",
         Required = false,
@@ -60,5 +68,5 @@ public class ActionInputs : IActionInputs
     public string LocalizationExcludes { get; set; } = "";
 
     public override string ToString() => 
-        $"{nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}, {nameof(TakeOverridesKeysSuperSetAsKeyFilter)}: {TakeOverridesKeysSuperSetAsKeyFilter}, {nameof(LocalizationFilter)}: {LocalizationFilter}, {nameof(LocalizationExcludes)}: {LocalizationExcludes}";
+        $"{nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(SourceLang)}: {SourceLang}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}, {nameof(TakeOverridesKeysSuperSetAsKeyFilter)}: {TakeOverridesKeysSuperSetAsKeyFilter}, {nameof(LocalizationFilter)}: {LocalizationFilter}, {nameof(LocalizationExcludes)}: {LocalizationExcludes}";
 }

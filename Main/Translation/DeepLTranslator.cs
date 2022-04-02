@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using DeepL;
+using DeepL.Model;
 using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation;
@@ -18,6 +19,7 @@ internal class DeepLTranslator : IDeepLTranslator
     private readonly Translator _deepLClient;
     private IImmutableSet<CultureInfo>? _cachedSupportedCultureInfos;
     private string? _sourceLanguage;
+    private string? _glossaryName;
 
     public DeepLTranslator(
         IActionInputs actionInputs,
@@ -27,6 +29,7 @@ internal class DeepLTranslator : IDeepLTranslator
         _logger = logger;
         _deepLClient = deepLClientFactory(actionInputs.AuthKey);
         _sourceLanguage = string.IsNullOrEmpty(actionInputs.SourceLang) ? null : actionInputs.SourceLang;
+        _glossaryName = string.IsNullOrEmpty(actionInputs.GlossaryName) ? null : actionInputs.GlossaryName;
     }
 
     public bool TranslationsShouldBeCached => true;
@@ -64,6 +67,17 @@ internal class DeepLTranslator : IDeepLTranslator
     {
         try
         {
+            GlossaryInfo? glossary = null;
+            if (_glossaryName != null && _sourceLanguage != null)
+            {
+                var glossaries = await _deepLClient.ListGlossariesAsync();
+                glossary = glossaries.FirstOrDefault(x =>
+                    x.Ready &&
+                    x.Name == _glossaryName &&
+                    x.SourceLanguageCode == _sourceLanguage &&
+                    x.TargetLanguageCode == targetLanguageCode.Name);
+            }
+
             var translations = await _deepLClient.TranslateTextAsync(
                 sourceTexts.Select(t => PlaceholderRegex.Replace(
                     HttpUtility.HtmlEncode(HotkeyPrefixRegex.Replace(t, "$1")),
@@ -74,7 +88,8 @@ internal class DeepLTranslator : IDeepLTranslator
                 {
                     PreserveFormatting = true,
                     TagHandling = "xml",
-                    IgnoreTags = { "placeholder" }
+                    IgnoreTags = { "placeholder" },
+                    GlossaryId = glossary?.GlossaryId
                 }
             );
 

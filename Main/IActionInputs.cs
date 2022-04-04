@@ -5,6 +5,7 @@ public interface IActionInputs
     string Directory { get; }
     string AuthKey { get; }
     string SourceLang { get; }
+    string GlossaryName { get; }
     string ExcludesRegex { get; }
     string DataCopiesRegex { get; }
     bool TakeOverridesKeysSuperSetAsKeyFilter { get; } 

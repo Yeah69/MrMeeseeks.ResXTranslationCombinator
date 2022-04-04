@@ -26,6 +26,14 @@ public class ActionInputs : IActionInputs
         Default = "",
         HelpText = "The language used in the original ResX files. Leave empty to auto-detect.")]
     public string SourceLang { get; set; } = "";
+
+    [Option(
+        'g',
+        "glossary-name",
+        Required = false,
+        Default = "",
+        HelpText = "The name of the glossary to use for translation. Only works if source-lang is also set.")]
+    public string GlossaryName { get; set; } = "";
         
     [Option(
         'e', 
@@ -68,5 +76,5 @@ public class ActionInputs : IActionInputs
     public string LocalizationExcludes { get; set; } = "";
 
     public override string ToString() => 
-        $"{nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(SourceLang)}: {SourceLang}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}, {nameof(TakeOverridesKeysSuperSetAsKeyFilter)}: {TakeOverridesKeysSuperSetAsKeyFilter}, {nameof(LocalizationFilter)}: {LocalizationFilter}, {nameof(LocalizationExcludes)}: {LocalizationExcludes}";
+        $"{nameof(Directory)}: {Directory}, {nameof(AuthKey)}: {AuthKey}, {nameof(SourceLang)}: {SourceLang}, {nameof(GlossaryName)}: {GlossaryName}, {nameof(ExcludesRegex)}: {ExcludesRegex}, {nameof(DataCopiesRegex)}: {DataCopiesRegex}, {nameof(TakeOverridesKeysSuperSetAsKeyFilter)}: {TakeOverridesKeysSuperSetAsKeyFilter}, {nameof(LocalizationFilter)}: {LocalizationFilter}, {nameof(LocalizationExcludes)}: {LocalizationExcludes}";
 }

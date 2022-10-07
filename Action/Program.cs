@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using CommandLine;
 using MrMeeseeks.ResXTranslationCombinator.Action;
-using StrongInject;
+
 using static CommandLine.Parser;
 
 await Default.ParseArguments(() => new ActionInputs(), args)
@@ -10,9 +10,7 @@ await Default.ParseArguments(() => new ActionInputs(), args)
 
 static async Task StartAnalysisAsync(ActionInputs inputs)
 {
-    await new StrongInjectContainer(inputs)
-        .RunAsync(c => c.TraverseAndTranslate())
-        .ConfigureAwait(false);
-    
+    await using var container = new Container(inputs);
+    await container.Create().TraverseAndTranslate().ConfigureAwait(false);
     Environment.Exit(0);
 }

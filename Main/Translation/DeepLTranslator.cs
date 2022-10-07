@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Web;
 using DeepL;
 using DeepL.Model;
+using MrMeeseeks.ResXTranslationCombinator.DI;
 using MrMeeseeks.ResXTranslationCombinator.Utility;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation;
@@ -13,7 +14,7 @@ internal interface IDeepLTranslator : ITranslator
         
 }
     
-internal class DeepLTranslator : IDeepLTranslator
+internal class DeepLTranslator : IDeepLTranslator, IContainerInstance
 {
     private readonly ILogger _logger;
     private readonly Translator _deepLClient;

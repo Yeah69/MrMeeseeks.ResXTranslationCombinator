@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Threading.Tasks;
+using MrMeeseeks.ResXTranslationCombinator.DI;
 
 namespace MrMeeseeks.ResXTranslationCombinator.Translation;
 
@@ -8,7 +9,7 @@ internal interface ICopyTranslator : ITranslator
         
 }
     
-internal class CopyTranslator : ICopyTranslator
+internal class CopyTranslator : ICopyTranslator, IContainerInstance
 {
     private readonly IDeepLTranslator _deepLTranslator;
 

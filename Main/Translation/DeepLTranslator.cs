@@ -59,8 +59,8 @@ internal class DeepLTranslator : IDeepLTranslator, IContainerInstance
     }
 
     private static readonly Regex HotkeyPrefixRegex = new("&([a-zA-Z0-9])", RegexOptions.Compiled);
-    private static readonly Regex PlaceholderRegex = new("{([0-9])}", RegexOptions.Compiled);
-    private static readonly Regex PlaceholderReverseRegex = new("<placeholder>([0-9])</placeholder>", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderRegex = new("{([a-zA-Z0-9]+)}", RegexOptions.Compiled);
+    private static readonly Regex PlaceholderReverseRegex = new("<placeholder>([a-zA-Z0-9]+)</placeholder>", RegexOptions.Compiled);
 
     public async Task<string[]> Translate(
         string[] sourceTexts, 

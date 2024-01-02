@@ -6,6 +6,7 @@ public interface IActionInputs
     string AuthKey { get; }
     string SourceLang { get; }
     string GlossaryName { get; }
+    string Context { get; }
     string ExcludesRegex { get; }
     string DataCopiesRegex { get; }
     bool TakeOverridesKeysSuperSetAsKeyFilter { get; } 

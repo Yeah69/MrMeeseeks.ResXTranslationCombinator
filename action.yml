@@ -19,6 +19,10 @@ inputs:
     description: 'The name of the glossary to use for translation. Only works if source-lang is also set.'
     required: false
     default: ''
+  context:
+    description: 'Free-form text to provide additional context for the contents of the ResX files.'
+    required: false
+    default: ''
   excludes-regex:
     description: 'Regex for names of default ResX files in order to decide whether to exclude file from processing.'
     required: false
@@ -56,6 +60,8 @@ runs:
   - ${{ inputs.source-lang }}
   - '-g'
   - ${{ inputs.glossary-name }}
+  - '-t'
+  - ${{ inputs.context }}
   - '-e'
   - ${{ inputs.excludes-regex }}
   - '-c'

@@ -34,6 +34,14 @@ public class ActionInputs : IActionInputs
         Default = "",
         HelpText = "The name of the glossary to use for translation. Only works if source-lang is also set.")]
     public string GlossaryName { get; set; } = "";
+
+    [Option(
+        't',
+        "context",
+        Required = false,
+        Default = "",
+        HelpText = "Free-form text to provide additional context for the contents of the ResX files.")]
+    public string Context { get; set; } = "";
         
     [Option(
         'e', 

@@ -21,6 +21,7 @@ internal class DeepLTranslator : IDeepLTranslator, IContainerInstance
     private IImmutableSet<CultureInfo>? _cachedSupportedCultureInfos;
     private string? _sourceLanguage;
     private string? _glossaryName;
+    private string? _context;
 
     public DeepLTranslator(
         IActionInputs actionInputs,
@@ -31,6 +32,7 @@ internal class DeepLTranslator : IDeepLTranslator, IContainerInstance
         _deepLClient = deepLClientFactory(actionInputs.AuthKey);
         _sourceLanguage = string.IsNullOrEmpty(actionInputs.SourceLang) ? null : actionInputs.SourceLang;
         _glossaryName = string.IsNullOrEmpty(actionInputs.GlossaryName) ? null : actionInputs.GlossaryName;
+        _context = string.IsNullOrEmpty(actionInputs.Context) ? null : actionInputs.Context;
     }
 
     public bool TranslationsShouldBeCached => true;
@@ -90,7 +92,8 @@ internal class DeepLTranslator : IDeepLTranslator, IContainerInstance
                     PreserveFormatting = true,
                     TagHandling = "xml",
                     IgnoreTags = { "placeholder" },
-                    GlossaryId = glossary?.GlossaryId
+                    GlossaryId = glossary?.GlossaryId,
+                    Context = _context
                 }
             );
 
